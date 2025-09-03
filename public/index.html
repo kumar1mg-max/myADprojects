@@ -68,9 +68,20 @@ input, select, button { margin:5px; padding:5px; }
 
 <script>
 let allWorkers = [];
+let baseUrl = '';
 
+// Fetch dynamic ngrok URL from backend
+async function loadConfig() {
+    const res = await fetch('/config');
+    const config = await res.json();
+    baseUrl = config.baseUrl;
+    fetchTasks();
+    fetchWorkers();
+}
+
+// ===== Task functions =====
 async function fetchTasks() {
-    const res = await fetch('http://localhost:3000/tasks');
+    const res = await fetch(`${baseUrl}/tasks`);
     const tasks = await res.json();
     const list = document.getElementById('taskList');
     list.innerHTML = '';
@@ -100,7 +111,7 @@ async function addTask() {
     const date = document.getElementById('date').value;
     const location = document.getElementById('location').value;
     if(!title || !type || !category) return alert("Title, type, category required");
-    await fetch('http://localhost:3000/tasks', {
+    await fetch(`${baseUrl}/tasks`, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({title, description:desc, type, date, location, category})
@@ -111,7 +122,7 @@ async function addTask() {
 }
 
 async function markDone(id){
-    await fetch(`http://localhost:3000/tasks/${id}`, {
+    await fetch(`${baseUrl}/tasks/${id}`, {
         method:'PUT',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({status:'done'})
@@ -120,7 +131,7 @@ async function markDone(id){
 }
 
 async function deleteTask(id){
-    await fetch(`http://localhost:3000/tasks/${id}`, {method:'DELETE'});
+    await fetch(`${baseUrl}/tasks/${id}`, {method:'DELETE'});
     fetchTasks();
 }
 
@@ -133,10 +144,10 @@ async function addWorker(){
     const location = document.getElementById('wlocation').value;
     const contact = document.getElementById('contact').value;
     if(!name || !category) return alert("Name and category required");
-    await fetch('http://localhost:3000/workers',{
+    await fetch(`${baseUrl}/workers`,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name,category,skills,rate,location,contact})
+        body: JSON.stringify({name,category,skills,rate,location,contact})
     });
     document.getElementById('wname').value='';
     document.getElementById('skills').value='';
@@ -144,7 +155,7 @@ async function addWorker(){
 }
 
 async function fetchWorkers(){
-    const res = await fetch('http://localhost:3000/workers');
+    const res = await fetch(`${baseUrl}/workers`);
     allWorkers = await res.json();
     displayWorkers(allWorkers);
 }
@@ -169,7 +180,7 @@ function displayWorkers(workers){
 async function searchWorkers(){
     const category = document.getElementById('filterCategory').value;
     const location = document.getElementById('filterLocation').value;
-    let url = 'http://localhost:3000/workers/search?';
+    let url = `${baseUrl}/workers/search?`;
     if(category) url += `category=${category}&`;
     if(location) url += `location=${location}`;
     const res = await fetch(url);
@@ -181,9 +192,9 @@ async function searchWorkers(){
 async function assignWorker(taskId){
     const workerId = prompt("Enter Worker ID to assign:");
     if(!workerId) return;
-    const taskRes = await fetch(`http://localhost:3000/tasks/${taskId}`);
+    const taskRes = await fetch(`${baseUrl}/tasks/${taskId}`);
     if(taskRes.status!==200) return alert("Task not found");
-    await fetch(`http://localhost:3000/tasks/${taskId}`, {
+    await fetch(`${baseUrl}/tasks/${taskId}`, {
         method:'PUT',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({assignedWorkerId: parseInt(workerId)})
@@ -192,8 +203,7 @@ async function assignWorker(taskId){
 }
 
 // ===== Initial load =====
-fetchTasks();
-fetchWorkers();
+loadConfig();
 </script>
 </body>
 </html>

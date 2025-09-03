@@ -10,7 +10,12 @@
     "type": "git",
     "url": "git+https://github.com/kumar1mg-max/myADprojects.git"
   },
-  "keywords": ["home", "assistance", "workers", "tasks"],
+  "keywords": [
+    "home",
+    "assistance",
+    "workers",
+    "tasks"
+  ],
   "author": "Kumar",
   "license": "ISC",
   "type": "commonjs",
@@ -19,7 +24,8 @@
   },
   "homepage": "https://github.com/kumar1mg-max/myADprojects#readme",
   "dependencies": {
-    "express": "^5.1.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0"
   }
 }
