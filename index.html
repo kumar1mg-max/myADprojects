@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CityHelper - Home Assistance</title>
+<style>
+body { font-family: Arial; padding:20px; background:#f7f7f7; }
+h1,h2 { color:#333; }
+input, select, button { margin:5px; padding:5px; }
+.card { background:#fff; padding:10px; margin:10px 0; border-radius:8px; box-shadow:0 0 5px #aaa; }
+.done { color: green; font-weight:bold; }
+.pending { color: orange; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<h1>CityHelper - Home Assistance</h1>
+
+<!-- ===== Citizen Task Form ===== -->
+<h2>Add Task</h2>
+<input type="text" id="title" placeholder="Task Title">
+<input type="text" id="desc" placeholder="Description">
+<select id="type">
+  <option value="hourly">Hourly</option>
+  <option value="daily">Daily</option>
+  <option value="monthly">Monthly</option>
+</select>
+<select id="category">
+  <option value="Cook">Cook</option>
+  <option value="Labour">Labour</option>
+  <option value="Maid">Maid</option>
+  <option value="Driver">Driver</option>
+</select>
+<input type="date" id="date">
+<input type="text" id="location" placeholder="Location">
+<button onclick="addTask()">Add Task</button>
+
+<!-- ===== Worker Registration ===== -->
+<h2>Register Worker</h2>
+<input type="text" id="wname" placeholder="Name">
+<select id="wcategory">
+  <option value="Cook">Cook</option>
+  <option value="Labour">Labour</option>
+  <option value="Maid">Maid</option>
+  <option value="Driver">Driver</option>
+</select>
+<input type="text" id="skills" placeholder="Skills (comma separated)">
+<input type="number" id="rate" placeholder="Rate (per day)">
+<input type="text" id="wlocation" placeholder="Location">
+<input type="text" id="contact" placeholder="Contact">
+<button onclick="addWorker()">Register Worker</button>
+
+<!-- ===== Worker Search ===== -->
+<h2>Search Workers</h2>
+<select id="filterCategory" onchange="searchWorkers()">
+  <option value="">All</option>
+  <option value="Cook">Cook</option>
+  <option value="Labour">Labour</option>
+  <option value="Maid">Maid</option>
+  <option value="Driver">Driver</option>
+</select>
+<input type="text" id="filterLocation" placeholder="Location" onkeyup="searchWorkers()">
+
+<div id="workerList"></div>
+
+<h2>Task List</h2>
+<div id="taskList"></div>
+
+<script>
+let allWorkers = [];
+
+async function fetchTasks() {
+    const res = await fetch('http://localhost:3000/tasks');
+    const tasks = await res.json();
+    const list = document.getElementById('taskList');
+    list.innerHTML = '';
+    tasks.forEach(t => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const worker = allWorkers.find(w=>w.id===t.assignedWorkerId);
+        card.innerHTML = `
+        <strong>${t.title}</strong> (${t.type}, ${t.category})<br>
+        ${t.description}<br>
+        Location: ${t.location} | Date: ${t.date}<br>
+        Status: <span class="${t.status}">${t.status}</span><br>
+        Assigned Worker: ${worker ? worker.name + " (" + worker.category + ")" : "None"}<br>
+        <button onclick="markDone(${t.id})">Mark Done</button>
+        <button onclick="deleteTask(${t.id})">Delete</button>
+        <button onclick="assignWorker(${t.id})">Assign Worker</button>
+        `;
+        list.appendChild(card);
+    });
+}
+
+async function addTask() {
+    const title = document.getElementById('title').value;
+    const desc = document.getElementById('desc').value;
+    const type = document.getElementById('type').value;
+    const category = document.getElementById('category').value;
+    const date = document.getElementById('date').value;
+    const location = document.getElementById('location').value;
+    if(!title || !type || !category) return alert("Title, type, category required");
+    await fetch('http://localhost:3000/tasks', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({title, description:desc, type, date, location, category})
+    });
+    document.getElementById('title').value='';
+    document.getElementById('desc').value='';
+    fetchTasks();
+}
+
+async function markDone(id){
+    await fetch(`http://localhost:3000/tasks/${id}`, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({status:'done'})
+    });
+    fetchTasks();
+}
+
+async function deleteTask(id){
+    await fetch(`http://localhost:3000/tasks/${id}`, {method:'DELETE'});
+    fetchTasks();
+}
+
+// ===== Worker functions =====
+async function addWorker(){
+    const name = document.getElementById('wname').value;
+    const category = document.getElementById('wcategory').value;
+    const skills = document.getElementById('skills').value.split(',');
+    const rate = document.getElementById('rate').value;
+    const location = document.getElementById('wlocation').value;
+    const contact = document.getElementById('contact').value;
+    if(!name || !category) return alert("Name and category required");
+    await fetch('http://localhost:3000/workers',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name,category,skills,rate,location,contact})
+    });
+    document.getElementById('wname').value='';
+    document.getElementById('skills').value='';
+    fetchWorkers();
+}
+
+async function fetchWorkers(){
+    const res = await fetch('http://localhost:3000/workers');
+    allWorkers = await res.json();
+    displayWorkers(allWorkers);
+}
+
+function displayWorkers(workers){
+    const list = document.getElementById('workerList');
+    list.innerHTML='';
+    workers.forEach(w=>{
+        const card = document.createElement('div');
+        card.className='card';
+        card.innerHTML=`
+        <strong>${w.name}</strong> (${w.category})<br>
+        Skills: ${w.skills.join(', ')}<br>
+        Rate: ${w.rate} | Location: ${w.location} | Contact: ${w.contact}<br>
+        Rating: ${w.rating} | Tasks Completed: ${w.tasksCompleted}
+        `;
+        list.appendChild(card);
+    });
+}
+
+// ===== Worker Search =====
+async function searchWorkers(){
+    const category = document.getElementById('filterCategory').value;
+    const location = document.getElementById('filterLocation').value;
+    let url = 'http://localhost:3000/workers/search?';
+    if(category) url += `category=${category}&`;
+    if(location) url += `location=${location}`;
+    const res = await fetch(url);
+    const workers = await res.json();
+    displayWorkers(workers);
+}
+
+// ===== Assign Worker =====
+async function assignWorker(taskId){
+    const workerId = prompt("Enter Worker ID to assign:");
+    if(!workerId) return;
+    const taskRes = await fetch(`http://localhost:3000/tasks/${taskId}`);
+    if(taskRes.status!==200) return alert("Task not found");
+    await fetch(`http://localhost:3000/tasks/${taskId}`, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({assignedWorkerId: parseInt(workerId)})
+    });
+    fetchTasks();
+}
+
+// ===== Initial load =====
+fetchTasks();
+fetchWorkers();
+</script>
+</body>
+</html>
+<link rel="icon" href="favicon.ico" type="image/x-icon">

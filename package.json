@@ -1,0 +1,25 @@
+{
+  "name": "myadprojects-backend",
+  "version": "1.0.0",
+  "description": "Backend for home assistance app",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kumar1mg-max/myADprojects.git"
+  },
+  "keywords": ["home", "assistance", "workers", "tasks"],
+  "author": "Kumar",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kumar1mg-max/myADprojects/issues"
+  },
+  "homepage": "https://github.com/kumar1mg-max/myADprojects#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "cors": "^2.8.5"
+  }
+}
