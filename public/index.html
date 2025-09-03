@@ -68,16 +68,7 @@ input, select, button { margin:5px; padding:5px; }
 
 <script>
 let allWorkers = [];
-let baseUrl = '';
-
-// Fetch dynamic ngrok URL from backend
-async function loadConfig() {
-    const res = await fetch('/config');
-    const config = await res.json();
-    baseUrl = config.baseUrl;
-    fetchTasks();
-    fetchWorkers();
-}
+let baseUrl = "https://homeassist-backend.onrender.com"; // <-- Updated Render URL
 
 // ===== Task functions =====
 async function fetchTasks() {
@@ -203,7 +194,8 @@ async function assignWorker(taskId){
 }
 
 // ===== Initial load =====
-loadConfig();
+fetchTasks();
+fetchWorkers();
 </script>
 </body>
 </html>
